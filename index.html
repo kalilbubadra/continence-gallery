@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Galeria de fotos Continence Gallery hospedada no GitHub Pages.">
+    <title>Continence Gallery</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-copy">
+        <p class="eyebrow">Acervo fotografico</p>
+        <h1>Continence Gallery</h1>
+        <p class="summary">Galeria organizada automaticamente a partir das imagens publicadas neste repositorio.</p>
+      </div>
+      <div class="counter" aria-live="polite">
+        <span id="photoCount">0</span>
+        <small>fotos</small>
+      </div>
+    </header>
+
+    <main>
+      <section class="toolbar" aria-label="Controles da galeria">
+        <label class="search-field">
+          <span>Buscar</span>
+          <input id="searchInput" type="search" placeholder="Nome do arquivo" autocomplete="off">
+        </label>
+
+        <label class="select-field">
+          <span>Ordem</span>
+          <select id="sortSelect">
+            <option value="desc">Mais recentes primeiro</option>
+            <option value="asc">Mais antigas primeiro</option>
+            <option value="name">Nome A-Z</option>
+          </select>
+        </label>
+      </section>
+
+      <section id="status" class="status" role="status">Carregando fotos do GitHub...</section>
+      <section id="gallery" class="gallery" aria-label="Fotos"></section>
+    </main>
+
+    <dialog id="lightbox" class="lightbox" aria-label="Visualizacao da foto">
+      <button id="closeLightbox" class="icon-button close-button" type="button" aria-label="Fechar">x</button>
+      <button id="prevPhoto" class="icon-button nav-button prev-button" type="button" aria-label="Foto anterior">‹</button>
+      <figure>
+        <img id="lightboxImage" alt="">
+        <figcaption id="lightboxCaption"></figcaption>
+      </figure>
+      <button id="nextPhoto" class="icon-button nav-button next-button" type="button" aria-label="Proxima foto">›</button>
+    </dialog>
+
+    <script src="script.js"></script>
+  </body>
+</html>
