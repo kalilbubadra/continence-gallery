@@ -7,8 +7,6 @@ const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
 const gallery = document.querySelector("#gallery");
 const statusMessage = document.querySelector("#status");
 const photoCount = document.querySelector("#photoCount");
-const searchInput = document.querySelector("#searchInput");
-const sortSelect = document.querySelector("#sortSelect");
 const lightbox = document.querySelector("#lightbox");
 const lightboxImage = document.querySelector("#lightboxImage");
 const lightboxCaption = document.querySelector("#lightboxCaption");
@@ -35,27 +33,18 @@ function getImageUrl(file) {
 
 function sortPhotos(items) {
   const sorted = [...items];
-
-  if (sortSelect.value === "asc") {
-    sorted.sort((a, b) => numberFromName(a.name) - numberFromName(b.name) || a.name.localeCompare(b.name));
-  } else if (sortSelect.value === "name") {
-    sorted.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
-  } else {
-    sorted.sort((a, b) => numberFromName(b.name) - numberFromName(a.name) || b.name.localeCompare(a.name));
-  }
-
+  sorted.sort((a, b) => numberFromName(b.name) - numberFromName(a.name) || b.name.localeCompare(a.name));
   return sorted;
 }
 
 function renderGallery() {
-  const query = searchInput.value.trim().toLowerCase();
-  visiblePhotos = sortPhotos(photos.filter((photo) => photo.name.toLowerCase().includes(query)));
+  visiblePhotos = sortPhotos(photos);
 
   photoCount.textContent = visiblePhotos.length;
   gallery.innerHTML = "";
 
   if (!visiblePhotos.length) {
-    statusMessage.textContent = query ? "Nenhuma foto encontrada para essa busca." : "Nenhuma imagem foi encontrada no repositorio.";
+    statusMessage.textContent = "Nenhuma imagem foi encontrada no repositorio.";
     return;
   }
 
@@ -91,7 +80,7 @@ function openPhoto(index) {
 
   lightboxImage.src = photo.url;
   lightboxImage.alt = `Foto ${photo.name}`;
-  lightboxCaption.textContent = `${photo.name} (${activeIndex + 1} de ${visiblePhotos.length})`;
+  lightboxCaption.textContent = "";
 
   if (!lightbox.open) {
     lightbox.showModal();
@@ -131,8 +120,6 @@ async function loadPhotos() {
   }
 }
 
-searchInput.addEventListener("input", renderGallery);
-sortSelect.addEventListener("change", renderGallery);
 closeLightbox.addEventListener("click", () => lightbox.close());
 prevPhoto.addEventListener("click", () => movePhoto(-1));
 nextPhoto.addEventListener("click", () => movePhoto(1));
