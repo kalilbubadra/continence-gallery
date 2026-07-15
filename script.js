@@ -7,6 +7,7 @@ const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
 const gallery = document.querySelector("#gallery");
 const statusMessage = document.querySelector("#status");
 const photoCount = document.querySelector("#photoCount");
+const loadSentinel = document.querySelector("#loadSentinel");
 const lightbox = document.querySelector("#lightbox");
 const lightboxImage = document.querySelector("#lightboxImage");
 const lightboxCaption = document.querySelector("#lightboxCaption");
@@ -17,6 +18,11 @@ const nextPhoto = document.querySelector("#nextPhoto");
 let photos = [];
 let visiblePhotos = [];
 let activeIndex = 0;
+let renderedCount = 0;
+let isRendering = false;
+let galleryObserver;
+
+const getBatchSize = () => (window.matchMedia("(max-width: 720px)").matches ? 12 : 30);
 
 function isImage(file) {
   return file.type === "file" && IMAGE_EXTENSIONS.some((extension) => file.name.toLowerCase().endsWith(extension));
@@ -42,6 +48,7 @@ function renderGallery() {
 
   photoCount.textContent = visiblePhotos.length;
   gallery.innerHTML = "";
+  renderedCount = 0;
 
   if (!visiblePhotos.length) {
     statusMessage.textContent = "Nenhuma imagem foi encontrada no repositorio.";
@@ -49,29 +56,76 @@ function renderGallery() {
   }
 
   statusMessage.textContent = "";
+  renderNextBatch();
+  setupGalleryObserver();
+}
+
+function preloadImage(photo) {
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.decoding = "async";
+    image.onload = () => resolve();
+    image.onerror = () => resolve();
+    image.src = photo.url;
+  });
+}
+
+function createPhotoCard(photo, index) {
+  const button = document.createElement("button");
+  button.className = "photo-card";
+  button.type = "button";
+  button.setAttribute("aria-label", `Abrir foto ${index + 1}`);
+  button.addEventListener("click", () => openPhoto(index));
+
+  const image = document.createElement("img");
+  image.src = photo.url;
+  image.alt = `Foto ${index + 1}`;
+  image.loading = index < getBatchSize() ? "eager" : "lazy";
+  image.decoding = "async";
+  image.fetchPriority = index < 4 ? "high" : "auto";
+
+  button.append(image);
+  return button;
+}
+
+async function renderNextBatch() {
+  if (isRendering || renderedCount >= visiblePhotos.length) return;
+
+  isRendering = true;
+  loadSentinel.classList.add("is-loading");
+
+  const start = renderedCount;
+  const batch = visiblePhotos.slice(start, start + getBatchSize());
+  await Promise.all(batch.map(preloadImage));
 
   const fragment = document.createDocumentFragment();
-
-  visiblePhotos.forEach((photo, index) => {
-    const button = document.createElement("button");
-    button.className = "photo-card";
-    button.type = "button";
-    button.setAttribute("aria-label", `Abrir ${photo.name}`);
-    button.addEventListener("click", () => openPhoto(index));
-
-    const image = document.createElement("img");
-    image.src = photo.url;
-    image.alt = `Foto ${photo.name}`;
-    image.loading = "lazy";
-
-    const caption = document.createElement("span");
-    caption.textContent = photo.name;
-
-    button.append(image, caption);
-    fragment.append(button);
+  batch.forEach((photo, offset) => {
+    fragment.append(createPhotoCard(photo, start + offset));
   });
 
   gallery.append(fragment);
+  renderedCount += batch.length;
+  isRendering = false;
+  loadSentinel.classList.toggle("is-loading", renderedCount < visiblePhotos.length);
+}
+
+function setupGalleryObserver() {
+  if (galleryObserver) {
+    galleryObserver.disconnect();
+  }
+
+  galleryObserver = new IntersectionObserver(
+    (entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        renderNextBatch();
+      }
+    },
+    {
+      rootMargin: "1200px 0px"
+    }
+  );
+
+  galleryObserver.observe(loadSentinel);
 }
 
 function openPhoto(index) {
